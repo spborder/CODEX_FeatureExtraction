@@ -18,13 +18,29 @@
       <channel>input</channel>
       <index>0</index>
     </image>
+    <region>
+      <name>input_region</name>
+      <label>Input Image Region</label>
+      <description>Select a rectangular region in the slide to run feature extraction on.</description>
+      <channel>input</channel>
+      <default></default>
+      <index>1</index>
+    </region>
+    <integer>
+      <name>nuclei_frame</name>
+      <label>Nuclei Frame</label>
+      <description>Frame index to use for nuclei segmentation</description>
+      <default>0</default>
+      <channel>input</channel>
+      <index>2</index>
+    </integer>
     <integer>
       <name>threshold_nuclei</name>
       <label>Threshold for Nuclei</label>
       <description> Pixel intensity threshold for nuclear subcompartment</description>
       <default>200</default>
       <channel>input</channel>
-      <index>2</index>
+      <index>3</index>
     </integer>
     <integer>
       <name>minsize_nuclei</name>
@@ -32,7 +48,7 @@
       <description> Minimum size for nuclear objects</description>
       <default>20</default>
       <channel>input</channel>
-      <index>3</index>
+      <index>4</index>
     </integer>
   </parameters>
   <parameters advanced="true">

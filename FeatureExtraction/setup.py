@@ -62,6 +62,8 @@ setup(
         'girder-client',
         # cli
         'ctk-cli',
+        'large-image[common]',
+        'wsi-annotations-kit'
     ],
     license='Apache Software License 2.0',
     keywords='CODEX_FTX',

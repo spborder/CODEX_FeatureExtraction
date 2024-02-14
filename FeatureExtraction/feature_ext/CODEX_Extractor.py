@@ -10,8 +10,8 @@ import sys
 
 import numpy as np
 
-from skimage.morphology import remove_small_objects, clear_border, remove_small_holes
-from skimage.segmentation import watershed, expand_labels
+from skimage.morphology import remove_small_objects, remove_small_holes
+from skimage.segmentation import watershed, expand_labels, clear_border
 from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
 

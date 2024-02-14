@@ -56,7 +56,7 @@
     <description>A Girder API URL and token for Girder client</description>
     <integer>
       <name>patch_size</name>
-      <label>Patch Size</name>
+      <label>Patch Size</label>
       <description>Size of patches to extract across selected region</description>
       <default>1024</default>
     </integer>

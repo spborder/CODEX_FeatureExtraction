@@ -116,7 +116,7 @@ def main(args):
         print(f'{a}: {getattr(args,a)}')
 
     # Getting image information (image id)
-    image_id = args.input_image
+    image_id = gc.get(f'/file/{args.input_image}')['itemId']
     image_info = gc.get(f'/item/{image_id}')
     print(f'Working on: {image_info["name"]}')
 

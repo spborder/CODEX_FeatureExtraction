@@ -22,10 +22,12 @@ import os
 import sys
 from math import ceil, floor
 import numpy as np
+import json
 
 from ctk_cli import CLIArgumentParser
 
 sys.path.append('..')
+from CODEX_Extractor import CODEXtractor
 
 import girder_client
 
@@ -138,8 +140,58 @@ def main(args):
         gc = gc
     )
 
-    
+    patch_maker = iter(patch_maker)
 
+    # Initializing feature extractor
+    feature_maker = CODEXtractor(
+        image_id = image_id,
+        region = args.input_region,
+        seg_params = {'frame':args.nuclei_frame,'threshold':args.threshold_nuclei,'min_size': args.minsize_nuclei},
+        gc = gc
+    )
+
+    # Initializing empty annotations object
+    all_nuc_annotations = [{
+        'annotation': {
+            'name': 'CODEX Nuclei',
+            'attributes': {},
+            'elements': [],
+            'user': {
+                'segmentation_parameters': {
+                    'frame': args.nuclei_frame,
+                    'threshold': args.threshold_nuclei,
+                    'min_size': args.minsize_nuclei
+                }
+            }
+        }
+    }]
+
+    more_patches = True
+    while more_patches:
+        try:
+            print(f'On patch: {patch_maker.patch_idx} of {len(patch_maker.regions_list)-1}')
+            # Getting the next patch region
+            next_region = next(patch_maker)
+            # Getting features and annotations within that region
+            region_annotations = feature_maker.get_intensity_features(
+                region_coords = next_region,
+                return_type = 'annotation'
+            )
+
+            # Adding to total annotations object
+            all_nuc_annotations[0]['annotation']['elements'].extend(region_annotations[0]['annotation']['elements'])
+        except StopIteration:
+            more_patches = False
+
+
+    # Posting annotations to item
+    gc.post(f'/annotation/item/{image_id}?token={args.girderToken}',
+            data = json.dumps(all_nuc_annotations),
+            headers = {
+                'X-HTTP-Method': 'POST',
+                'Content-Type': 'application/json'
+                }
+            )
 
 
 

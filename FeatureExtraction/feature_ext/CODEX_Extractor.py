@@ -121,7 +121,7 @@ class CODEXtractor:
         # return_type can be a string or list of strings 
 
         # Step 1: Segmenting the nuclei
-        nuclei_region = self.tile_source.getRegion(
+        nuclei_region, _ = self.tile_source.getRegion(
             frame = self.seg_params['frame'],
             region = {
                 'left': region_coords[0],

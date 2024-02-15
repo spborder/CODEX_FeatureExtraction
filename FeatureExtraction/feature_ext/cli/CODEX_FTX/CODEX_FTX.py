@@ -57,6 +57,7 @@ class Patches:
             ]
 
         self.regions_list = self.get_regions_list()
+        print(f'These are the regions: {self.regions_list}')
 
     def get_regions_list(self):
         
@@ -122,9 +123,8 @@ def main(args):
 
     # Copying it over to the plugin filesystem
     _ = gc.downloadFile(
-            itemId = args.input_image,
-            dest = '/',
-            name = image_info['name']
+            fileId = args.input_image,
+            path = f'/{image_info["name"]}',
         )
     print(f'Image copied successfully! {image_info["name"] in os.listdir("/")}')
 
@@ -169,9 +169,10 @@ def main(args):
     more_patches = True
     while more_patches:
         try:
-            print(f'On patch: {patch_maker.patch_idx} of {len(patch_maker.regions_list)-1}')
             # Getting the next patch region
             next_region = next(patch_maker)
+            print(f'On patch: {patch_maker.patch_idx+1} of {len(patch_maker.regions_list)}')
+
             # Getting features and annotations within that region
             region_annotations = feature_maker.get_intensity_features(
                 region_coords = next_region,

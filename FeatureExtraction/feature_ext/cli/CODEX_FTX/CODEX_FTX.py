@@ -121,8 +121,8 @@ def main(args):
     print(f'Working on: {image_info["name"]}')
 
     # Copying it over to the plugin filesystem
-    _ = gc.downloadItem(
-            itemId = image_id,
+    _ = gc.downloadFile(
+            itemId = args.input_image,
             dest = '/',
             name = image_info['name']
         )

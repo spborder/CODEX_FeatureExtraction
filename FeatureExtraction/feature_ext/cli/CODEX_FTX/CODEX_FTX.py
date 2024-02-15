@@ -62,9 +62,8 @@ class Patches:
     def get_regions_list(self):
         
         # Defining list of all possible non-overlapping regions within the selected region
-
-        region_height = self.region[3]-self.region[1]
-        region_width = self.region[2]-self.region[0]
+        region_height = self.region[3]
+        region_width = self.region[2]
 
         if region_height <= self.patch_size and region_width <= self.patch_size:
             return [self.region]
@@ -78,12 +77,12 @@ class Patches:
                 for y in range(0,n_patch_y):
 
                     # Finding patch start coordinates
-                    patch_start_x = np.minimum(self.region[0]+(x*self.patch_size),self.region[2]-(self.region[2]%self.patch_size))
-                    patch_start_y = np.minimum(self.region[0]+(y*self.patch_size),self.region[3]-(self.region[3]%self.patch_size))
+                    patch_start_x = np.minimum(self.region[0]+(x*self.patch_size),(self.region[0]+self.region[2])-((self.region[0]+self.region[2])%self.patch_size))
+                    patch_start_y = np.minimum(self.region[0]+(y*self.patch_size),(self.region[1]+self.region[3])-((self.region[1]+self.region[3])%self.patch_size))
 
                     # Finding patch end coordinates
-                    patch_end_x = np.minimum(patch_start_x+self.patch_size, self.region[2])
-                    patch_end_y = np.minimum(patch_start_y+self.patch_size,self.region[3])
+                    patch_end_x = np.minimum(patch_start_x+self.patch_size, (self.region[0]+self.region[2]))
+                    patch_end_y = np.minimum(patch_start_y+self.patch_size,(self.region[1]+self.region[3]))
 
                     patch_regions_list.append([patch_start_x,patch_start_y,patch_end_x,patch_end_y])
             
@@ -146,7 +145,11 @@ def main(args):
     feature_maker = CODEXtractor(
         image_id = image_id,
         region = args.input_region,
-        seg_params = {'frame':args.nuclei_frame,'threshold':args.threshold_nuclei,'min_size': args.minsize_nuclei},
+        seg_params = {
+            'frame':args.nuclei_frame,
+            'threshold':args.threshold_nuclei,
+            'min_size': args.minsize_nuclei
+            },
         gc = gc
     )
 

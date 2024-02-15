@@ -26,13 +26,11 @@ import wsi_annotations_kit.wsi_annotations_kit as wak
 class CODEXtractor:
     def __init__(self,
                  image_id,
-                 region,
                  seg_params,
                  gc):
         
         self.gc = gc
         self.image_id = image_id
-        self.region = region
         self.seg_params = seg_params
 
         # Getting image information
@@ -119,6 +117,7 @@ class CODEXtractor:
 
         # Main feature extraction function for pulling a region from the image, segmenting nuclei, calculating features, and returning some formatted object
         # return_type can be a string or list of strings 
+        print(region_coords)
 
         # Step 1: Segmenting the nuclei
         nuclei_region, _ = self.tile_source.getRegion(
@@ -129,10 +128,13 @@ class CODEXtractor:
                 'right': region_coords[2],
                 'bottom': region_coords[3]
             },
+            output = dict(maxWidth = 2000),
             format = large_image.constants.TILE_FORMAT_NUMPY
         )
 
-        nuclei_mask, cytoplasm_mask = self.get_nuclei(nuclei_region)
+        print(nuclei_region)
+        print(f'dtype: {nuclei_region.dtype}, min: {np.min(nuclei_region)}, max: {np.max(nuclei_region)}')
+        nuclei_mask, cytoplasm_mask = self.get_nuclei(np.uint8(nuclei_region))
 
         # If there are no nuclei, don't do the rest here
         if np.sum(nuclei_mask)==0:

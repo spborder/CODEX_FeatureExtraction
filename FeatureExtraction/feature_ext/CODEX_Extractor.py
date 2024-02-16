@@ -87,7 +87,7 @@ class CODEXtractor:
         # Removing nuclei that touch the borders of the image region
         processed_nuclei = clear_border(processed_nuclei)
 
-        processed_nuclei = ndi.label(processed_nuclei)
+        processed_nuclei, _ = ndi.label(processed_nuclei)
 
         # Getting mask of cell "cytoplasm" associated with each nucleus (can subtract processed_nuclei to get only the labeled "cytoplasm")
         cytoplasm = expand_labels(processed_nuclei, distance = self.seg_params['cyto_pixels'])
@@ -117,7 +117,6 @@ class CODEXtractor:
 
         # Main feature extraction function for pulling a region from the image, segmenting nuclei, calculating features, and returning some formatted object
         # return_type can be a string or list of strings 
-        print(region_coords)
 
         # Step 1: Segmenting the nuclei
         nuclei_region, _ = self.tile_source.getRegion(
@@ -132,8 +131,6 @@ class CODEXtractor:
             format = large_image.constants.TILE_FORMAT_NUMPY
         )
 
-        print(nuclei_region)
-        print(f'dtype: {nuclei_region.dtype}, min: {np.min(nuclei_region)}, max: {np.max(nuclei_region)}')
         nuclei_mask, cytoplasm_mask = self.get_nuclei(np.uint8(nuclei_region))
 
         # If there are no nuclei, don't do the rest here
@@ -202,7 +199,7 @@ class CODEXtractor:
 
                 return annotations_json
             
-            elif return_type == 'dataframe':
+            elif return_type == 'csv':
 
                 nuclei_features_dataframe = self.format_df(annotations_json)
 
@@ -212,7 +209,7 @@ class CODEXtractor:
             for t in return_type:
                 if return_type=='json':
                     return_list.append(annotations_json)
-                elif return_type=='dataframe':
+                elif return_type=='csv':
                     nuclei_features_dataframe = self.format_df(annotations_json)
                     return_list.append(nuclei_features_dataframe)
             

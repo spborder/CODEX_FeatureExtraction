@@ -70,6 +70,13 @@
       <default>1024</default>
     </integer>
     <string>
+      <name>return_type</name>
+      <longflag>return-type</longflag>
+      <label>Return Type</label>
+      <description>Whether to return just the annotations or also return a csv file with features(also excepts comma-separated list)</description>
+      <default>json</default>
+    </string>
+    <string>
       <name>girderApiUrl</name>
       <longflag>api-url</longflag>
       <label>Girder API URL</label>

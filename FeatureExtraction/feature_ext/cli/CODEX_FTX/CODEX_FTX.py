@@ -23,6 +23,7 @@ import sys
 from math import ceil, floor
 import numpy as np
 import json
+import pandas as pd
 
 from ctk_cli import CLIArgumentParser
 
@@ -148,27 +149,58 @@ def main(args):
             'frame':args.nuclei_frame,
             'threshold':args.threshold_nuclei,
             'min_size': args.minsize_nuclei,
-            'cyto_pixels': 10
+            'cyto_pixels': args.cyto_pixels
             },
         gc = gc
     )
 
-    # Initializing empty annotations object
-    all_nuc_annotations = [{
-        'annotation': {
-            'name': 'CODEX Nuclei',
-            'attributes': {},
-            'elements': [],
-            'user': {
-                'segmentation_parameters': {
-                    'frame': args.nuclei_frame,
-                    'threshold': args.threshold_nuclei,
-                    'min_size': args.minsize_nuclei,
-                    'cyto_pixels': 10
+    # Getting the return type(s) sorted
+    if ',' in args.return_type:
+        return_type = args.return_type.split(',')
+        
+        if 'json' in return_type:
+            return_annotations = True
+        else:
+            return_annotations = False
+        
+        if 'csv' in return_type:
+            return_csv = True
+        else:
+            return_csv = False
+
+    else:
+        return_type = args.return_type
+
+        if return_type == 'json':
+            return_annotations = True
+        else:
+            return_annotations = False
+
+        if return_type == 'csv':
+            return_csv = True
+        else:
+            return_csv = False
+    
+    if return_annotations:
+        # Initializing empty annotations object
+        all_nuc_annotations = [{
+            'annotation': {
+                'name': 'CODEX Nuclei',
+                'attributes': {},
+                'elements': [],
+                'user': {
+                    'segmentation_parameters': {
+                        'frame': args.nuclei_frame,
+                        'threshold': args.threshold_nuclei,
+                        'min_size': args.minsize_nuclei,
+                        'cyto_pixels': args.cyto_pixels
+                    }
                 }
             }
-        }
-    }]
+        }]
+
+    if return_csv:
+        all_nuc_df = pd.DataFrame()
 
     more_patches = True
     while more_patches:
@@ -178,25 +210,45 @@ def main(args):
             print(f'On patch: {patch_maker.patch_idx+1} of {len(patch_maker.regions_list)}')
 
             # Getting features and annotations within that region
-            region_annotations = feature_maker.get_intensity_features(
+            region_annotations, region_df = feature_maker.get_intensity_features(
                 region_coords = next_region,
-                return_type = 'annotation'
+                return_type = return_type
             )
 
-            # Adding to total annotations object
-            all_nuc_annotations[0]['annotation']['elements'].extend(region_annotations[0]['annotation']['elements'])
+            if return_annotations:
+                # Adding to total annotations object
+                all_nuc_annotations[0]['annotation']['elements'].extend(region_annotations[0]['annotation']['elements'])
+
+            if return_csv:
+                # Adding to all_nuc_df
+                if all_nuc_df.empty:
+                    all_nuc_df = region_df
+                else:
+                    all_nuc_df = pd.concat([all_nuc_df,region_df],axis = 0, ignore_index = True)
+
+
+
         except StopIteration:
             more_patches = False
 
 
-    # Posting annotations to item
-    gc.post(f'/annotation/item/{image_id}?token={args.girderToken}',
-            data = json.dumps(all_nuc_annotations),
-            headers = {
-                'X-HTTP-Method': 'POST',
-                'Content-Type': 'application/json'
-                }
-            )
+    if return_annotations:
+        # Posting annotations to item
+        gc.post(f'/annotation/item/{image_id}?token={args.girderToken}',
+                data = json.dumps(all_nuc_annotations),
+                headers = {
+                    'X-HTTP-Method': 'POST',
+                    'Content-Type': 'application/json'
+                    }
+                )
+
+    if return_csv:
+        # Adding csv to image item files
+        all_nuc_df.to_csv('/Nuclei_features.csv')
+        gc.uploadFileToItem(
+            itemId = image_id,
+            filepath = '/Nuclei_features.csv'
+        )
 
 
 

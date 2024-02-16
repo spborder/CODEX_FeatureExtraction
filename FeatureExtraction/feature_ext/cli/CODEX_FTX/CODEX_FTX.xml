@@ -50,6 +50,14 @@
       <channel>input</channel>
       <index>4</index>
     </integer>
+    <integer>
+      <name>cyto_pixels</name>
+      <label>Cytoplasm Pixels</label>
+      <description>Amount of pixels to dilate from nuclei (without label overlap).</description>
+      <default>10</default>
+      <channel>input</channel>
+      <index>5</index>
+    </integer>
   </parameters>
   <parameters advanced="true">
     <label>Girder API URL and Key</label>

@@ -38,7 +38,11 @@ RUN apt-get update ##[edited]
 RUN apt-get install libxml2-dev libxslt1-dev -y
 
 # Required for opencv-python (cv2)
-#RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 -y
+
+RUN apt-get update && apt-get install libpq-dev gdal-bin libgdal-dev -y
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
 
 WORKDIR /
 # Make Python3 the default and install pip.  Whichever is done last determines
@@ -67,7 +71,7 @@ WORKDIR $ftx_path
 
 # Installing packages in setup.py
 RUN pip install --no-cache-dir --upgrade --ignore-installed pip setuptools && \
-    pip install --no-cache-dir .  && \
+    pip install --no-cache-dir .  --find-links https://girder.github.io/large_image_wheels && \
     rm -rf /root/.cache/pip/*
 
 # Show what was installed

@@ -144,11 +144,11 @@ def main(args):
     # Initializing feature extractor
     feature_maker = CODEXtractor(
         image_id = image_id,
-        region = args.input_region,
         seg_params = {
             'frame':args.nuclei_frame,
             'threshold':args.threshold_nuclei,
-            'min_size': args.minsize_nuclei
+            'min_size': args.minsize_nuclei,
+            'cyto_pixels': 10
             },
         gc = gc
     )
@@ -163,7 +163,8 @@ def main(args):
                 'segmentation_parameters': {
                     'frame': args.nuclei_frame,
                     'threshold': args.threshold_nuclei,
-                    'min_size': args.minsize_nuclei
+                    'min_size': args.minsize_nuclei,
+                    'cyto_pixels': 10
                 }
             }
         }

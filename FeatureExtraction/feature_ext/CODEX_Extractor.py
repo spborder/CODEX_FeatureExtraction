@@ -67,27 +67,44 @@ class CODEXtractor:
         thresh_image[thresh_image<=self.seg_params['threshold']] = 0
         thresh_image[thresh_image>0] = 1
 
+        print(f'after thresh: {np.sum(thresh_image)}')
+        
+        border_cleared = clear_border(thresh_image)
+        print(f'After clearing border: {np.sum(border_cleared)}')
+
         # Post-processing thresholded binary image
-        remove_holes = remove_small_holes(thresh_image>0,area_threshold = 10)
+        remove_holes = remove_small_holes(border_cleared>0,area_threshold = 5)
         remove_holes = remove_holes>0
+
+        print(f'after removing holes: {np.sum(remove_holes)}')
+        """
         # Watershed transform for splitting overlapping nuclei
         distance_transform = ndi.distance_transform_edt(remove_holes)
+        print(f'max distance transform: {np.max(distance_transform)}, min distance_transform: {np.min(distance_transform)}')
         labeled_mask, _ = ndi.label(remove_holes)
+        print(f'number of nuclei: {np.max(labeled_mask)}')
         coords = peak_local_max(distance_transform,footprint=np.ones((3,3)),labels = labeled_mask)
+        print(f'local max peaks: {np.shape(coords)}')
         watershed_mask = np.zeros(distance_transform.shape,dtype=bool)
         watershed_mask[tuple(coords.T)] = True
         markers, _ = ndi.label(watershed_mask)
 
-        watershedded = watershed(-distance_transform,markers,mask=remove_holes)
-        watershedded = watershedded
+        watershedded = watershed(-distance_transform,markers,mask=labeled_mask)
+        watershedded = watershedded>0
+        print(f'After watershedding: {np.sum(watershedded)}')
+        if np.sum(watershedded)==0:
+            print('Watershedding removed everything?')
+            watershedded = remove_holes
 
+        """
         # Removing any small objects
-        processed_nuclei = remove_small_objects(watershedded,self.seg_params['min_size'])
+        processed_nuclei = remove_small_objects(remove_holes,self.seg_params['min_size'])
+        print(f'After removing small_objects: {np.sum(processed_nuclei)}')
 
         # Removing nuclei that touch the borders of the image region
-        processed_nuclei = clear_border(processed_nuclei)
-
         processed_nuclei, _ = ndi.label(processed_nuclei)
+        print(f'Number of nuclei found: {np.max(processed_nuclei)}')
+
 
         # Getting mask of cell "cytoplasm" associated with each nucleus (can subtract processed_nuclei to get only the labeled "cytoplasm")
         cytoplasm = expand_labels(processed_nuclei, distance = self.seg_params['cyto_pixels'])
@@ -131,11 +148,11 @@ class CODEXtractor:
             format = large_image.constants.TILE_FORMAT_NUMPY
         )
 
-        nuclei_mask, cytoplasm_mask = self.get_nuclei(np.uint8(nuclei_region))
+        nuclei_mask, cytoplasm_mask = self.get_nuclei(nuclei_region)
 
         # If there are no nuclei, don't do the rest here
         if np.sum(nuclei_mask)==0:
-            return None
+            return None, None
 
         # Step 2: Creating annotations
         annotations_json = self.make_annotations(nuclei_mask, region_coords)
@@ -210,6 +227,9 @@ class CODEXtractor:
             nuclei_features_dataframe = self.format_df(annotations_json)
             
             return annotations_json, nuclei_features_dataframe
+        
+        else:
+            return annotations_json, None
 
     def format_df(self, annotations):
 

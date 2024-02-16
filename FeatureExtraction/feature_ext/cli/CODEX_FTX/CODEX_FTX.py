@@ -215,17 +215,18 @@ def main(args):
                 return_type = return_type
             )
 
-            if return_annotations:
-                # Adding to total annotations object
-                all_nuc_annotations[0]['annotation']['elements'].extend(region_annotations[0]['annotation']['elements'])
+            if not region_annotations is None and region_df is None:
 
-            if return_csv:
-                # Adding to all_nuc_df
-                if all_nuc_df.empty:
-                    all_nuc_df = region_df
-                else:
-                    all_nuc_df = pd.concat([all_nuc_df,region_df],axis = 0, ignore_index = True)
+                if return_annotations:
+                    # Adding to total annotations object
+                    all_nuc_annotations[0]['annotation']['elements'].extend(region_annotations[0]['annotation']['elements'])
 
+                if return_csv:
+                    # Adding to all_nuc_df
+                    if all_nuc_df.empty:
+                        all_nuc_df = region_df
+                    else:
+                        all_nuc_df = pd.concat([all_nuc_df,region_df],axis = 0, ignore_index = True)
 
 
         except StopIteration:

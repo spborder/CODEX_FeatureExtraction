@@ -197,23 +197,19 @@ class CODEXtractor:
         if isinstance(return_type,str):
             if return_type=='json':
 
-                return annotations_json
+                return annotations_json, None
             
             elif return_type == 'csv':
 
                 nuclei_features_dataframe = self.format_df(annotations_json)
 
-                return nuclei_features_dataframe
+                return None, nuclei_features_dataframe
         elif isinstance(return_type,list):
-            return_list = []
-            for t in return_type:
-                if return_type=='json':
-                    return_list.append(annotations_json)
-                elif return_type=='csv':
-                    nuclei_features_dataframe = self.format_df(annotations_json)
-                    return_list.append(nuclei_features_dataframe)
             
-            return return_list
+            # Plugin only expects one order anyways right?
+            nuclei_features_dataframe = self.format_df(annotations_json)
+            
+            return annotations_json, nuclei_features_dataframe
 
     def format_df(self, annotations):
 

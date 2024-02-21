@@ -63,51 +63,34 @@ class CODEXtractor:
         # For an input image region, segment the nuclei.
         # Assumes grayscale input image with nuclei being lighter than background
         # returns labeled mask
-
         thresh_image = image_region.copy()
 
         # Thresholding grayscale image
         thresh_image[thresh_image<=self.seg_params['threshold']] = 0
         thresh_image[thresh_image>0] = 1
 
-        print(f'after thresh: {np.sum(thresh_image)}')
-        
-        border_cleared = clear_border(thresh_image)
-        print(f'After clearing border: {np.sum(border_cleared)}')
-
         # Post-processing thresholded binary image
-        remove_holes = remove_small_holes(border_cleared>0,area_threshold = 5)
+        remove_holes = remove_small_holes(thresh_image>0,area_threshold = 10)
         remove_holes = remove_holes>0
 
-        print(f'after removing holes: {np.sum(remove_holes)}')
-        """
         # Watershed transform for splitting overlapping nuclei
         distance_transform = ndi.distance_transform_edt(remove_holes)
-        print(f'max distance transform: {np.max(distance_transform)}, min distance_transform: {np.min(distance_transform)}')
+
         labeled_mask, _ = ndi.label(remove_holes)
-        print(f'number of nuclei: {np.max(labeled_mask)}')
         coords = peak_local_max(distance_transform,footprint=np.ones((3,3)),labels = labeled_mask)
-        print(f'local max peaks: {np.shape(coords)}')
         watershed_mask = np.zeros(distance_transform.shape,dtype=bool)
         watershed_mask[tuple(coords.T)] = True
         markers, _ = ndi.label(watershed_mask)
 
-        watershedded = watershed(-distance_transform,markers,mask=labeled_mask)
-        watershedded = watershedded>0
-        print(f'After watershedding: {np.sum(watershedded)}')
-        if np.sum(watershedded)==0:
-            print('Watershedding removed everything?')
-            watershedded = remove_holes
+        watershedded = watershed(-distance_transform,markers,mask=remove_holes)
+        watershedded = watershedded
 
-        """
         # Removing any small objects
-        processed_nuclei = remove_small_objects(remove_holes,self.seg_params['min_size'])
-        print(f'After removing small_objects: {np.sum(processed_nuclei)}')
+        processed_nuclei = remove_small_objects(watershedded,self.seg_params['min_size'])
 
         # Removing nuclei that touch the borders of the image region
+        processed_nuclei = clear_border(processed_nuclei)
         processed_nuclei, _ = ndi.label(processed_nuclei)
-        print(f'Number of nuclei found: {np.max(processed_nuclei)}')
-
 
         # Getting mask of cell "cytoplasm" associated with each nucleus (can subtract processed_nuclei to get only the labeled "cytoplasm")
         cytoplasm = expand_labels(processed_nuclei, distance = self.seg_params['cyto_pixels'])
@@ -187,60 +170,64 @@ class CODEXtractor:
             'Min_Channels',
             'Median_Channels'
         ]
-        for nuc_idx,nuc in tqdm(enumerate(annotations_json[0]['annotation']['elements'])):
-            
-            # Getting a binary mask of this specific nucleus and its cytoplasm
-            #specific_nuc_mask = cytoplasm_mask.copy()
-            #specific_nuc_mask[specific_nuc_mask != nuc] = 0
-            #specific_nuc_mask[specific_nuc_mask>0] = 1
 
-            # Instead of creating the mask from the cytoplasm mask, creating from the annotation
-            # This insures alignment in the event that a nucleus is not a valid shape
-            specific_nuc_mask = np.zeros_like(nuclei_mask)
-            adjusted_coords = [[i[0]-region_coords[0],i[1]-region_coords[1]] for i in nuc['points']]
-            row_coords = [i[1] for i in adjusted_coords]
-            col_coords = [i[0] for i in adjusted_coords]
-            row, col = polygon(row_coords,col_coords)
-            specific_nuc_mask[row,col] = 1
+        print(f'Found: {len(annotations_json[0]["annotation"]["elements"])} Nuclei')
+        if len(annotations_json[0]['annotation']['elements'])>0:
+            for nuc_idx,nuc in tqdm(enumerate(annotations_json[0]['annotation']['elements'])):
+                
+                # Getting a binary mask of this specific nucleus and its cytoplasm
+                #specific_nuc_mask = cytoplasm_mask.copy()
+                #specific_nuc_mask[specific_nuc_mask != nuc] = 0
+                #specific_nuc_mask[specific_nuc_mask>0] = 1
 
-            # Masking the frame_array
-            masked_frames = np.where(specific_nuc_mask>0,frame_array.copy(),0)
+                # Instead of creating the mask from the cytoplasm mask, creating from the annotation
+                # This insures alignment in the event that a nucleus is not a valid shape
+                specific_nuc_mask = np.zeros_like(nuclei_mask)
+                adjusted_coords = [[i[0]-region_coords[0],i[1]-region_coords[1]] for i in nuc['points']]
+                row_coords = [i[1] for i in adjusted_coords]
+                col_coords = [i[0] for i in adjusted_coords]
+                row, col = polygon(row_coords,col_coords)
+                specific_nuc_mask[row,col] = 1
 
-            # Finding intensity features
-            mean_frames = np.nanmean(masked_frames,axis = tuple(masked_frames.ndim-1))
-            std_frames = np.nanstd(masked_frames,axis = tuple(masked_frames.ndim-1))
-            max_frames = np.nanmax(masked_frames,axis = tuple(masked_frames.ndim-1))
-            min_frames = np.nanmin(masked_frames,axis = tuple(masked_frames.ndim-1))
-            median_frames = np.nanmedian(masked_frames,axis = tuple(masked_frames.ndim-1))
+                # Masking the frame_array
+                masked_frames = np.where(specific_nuc_mask>0,frame_array.copy(),0)
 
-            intensity_features_list = [mean_frames, std_frames, max_frames, min_frames, median_frames]
+                # Finding intensity features
+                mean_frames = np.nanmean(masked_frames,axis = tuple(masked_frames.ndim-1))
+                std_frames = np.nanstd(masked_frames,axis = tuple(masked_frames.ndim-1))
+                max_frames = np.nanmax(masked_frames,axis = tuple(masked_frames.ndim-1))
+                min_frames = np.nanmin(masked_frames,axis = tuple(masked_frames.ndim-1))
+                median_frames = np.nanmedian(masked_frames,axis = tuple(masked_frames.ndim-1))
 
-            # Adding features to annotations dictionary
-            if 'user' not in annotations_json[0]['annotation']['elements'][nuc_idx]:
-                annotations_json[0]['annotation']['elements'][nuc_idx]['user'] = {}
-            
-            for feat_name, feat in zip(feature_list,intensity_features_list):
-                annotations_json[0]['annotation']['elements'][nuc_idx]['user'][feat_name] = feat.tolist()
+                intensity_features_list = [mean_frames, std_frames, max_frames, min_frames, median_frames]
 
-        if isinstance(return_type,str):
-            if return_type=='json':
+                # Adding features to annotations dictionary
+                if 'user' not in annotations_json[0]['annotation']['elements'][nuc_idx]:
+                    annotations_json[0]['annotation']['elements'][nuc_idx]['user'] = {}
+                
+                for feat_name, feat in zip(feature_list,intensity_features_list):
+                    annotations_json[0]['annotation']['elements'][nuc_idx]['user'][feat_name] = feat.tolist()
 
-                return annotations_json, None
-            
-            elif return_type == 'csv':
+            if isinstance(return_type,str):
+                if return_type=='json':
 
+                    return annotations_json, None
+                
+                elif return_type == 'csv':
+
+                    nuclei_features_dataframe = self.format_df(annotations_json)
+
+                    return None, nuclei_features_dataframe
+            elif isinstance(return_type,list):
+                
+                # Plugin only expects one order anyways right?
                 nuclei_features_dataframe = self.format_df(annotations_json)
-
-                return None, nuclei_features_dataframe
-        elif isinstance(return_type,list):
-            
-            # Plugin only expects one order anyways right?
-            nuclei_features_dataframe = self.format_df(annotations_json)
-            
-            return annotations_json, nuclei_features_dataframe
-        
+                
+                return annotations_json, nuclei_features_dataframe
+            else:
+                return annotations_json, None
         else:
-            return annotations_json, None
+            return None, None
 
     def format_df(self, annotations):
 

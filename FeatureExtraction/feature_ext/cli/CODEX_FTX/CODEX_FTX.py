@@ -67,7 +67,10 @@ class Patches:
         region_width = self.region[2]
 
         if region_height <= self.patch_size and region_width <= self.patch_size:
-            return [self.region]
+            region_list = [[int(self.region[0]),int(self.region[1]),int(self.region[0]+region_width),int(self.region[1]+region_height)]]
+
+            return region_list
+
         else:
             n_patch_x = ceil(region_width/self.patch_size)
             n_patch_y = ceil(region_height/self.patch_size)
@@ -187,15 +190,7 @@ def main(args):
             'annotation': {
                 'name': 'CODEX Nuclei',
                 'attributes': {},
-                'elements': [],
-                'user': {
-                    'segmentation_parameters': {
-                        'frame': args.nuclei_frame,
-                        'threshold': args.threshold_nuclei,
-                        'min_size': args.minsize_nuclei,
-                        'cyto_pixels': args.cyto_pixels
-                    }
-                }
+                'elements': []
             }
         }]
 
@@ -215,13 +210,13 @@ def main(args):
                 return_type = return_type
             )
 
-            if not region_annotations is None and region_df is None:
-
-                if return_annotations:
+            if return_annotations:
+                if not region_annotations is None:
                     # Adding to total annotations object
                     all_nuc_annotations[0]['annotation']['elements'].extend(region_annotations[0]['annotation']['elements'])
 
-                if return_csv:
+            if return_csv:
+                if not region_df is None:
                     # Adding to all_nuc_df
                     if all_nuc_df.empty:
                         all_nuc_df = region_df

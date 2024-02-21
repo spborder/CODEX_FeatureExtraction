@@ -12,6 +12,7 @@ import numpy as np
 
 from skimage.morphology import remove_small_objects, remove_small_holes
 from skimage.segmentation import watershed, expand_labels, clear_border
+from skimage.draw import polygon
 from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
 
@@ -22,6 +23,8 @@ from typing import List, Union
 import large_image
 
 import wsi_annotations_kit.wsi_annotations_kit as wak
+
+from tqdm import tqdm
 
 class CODEXtractor:
     def __init__(self,
@@ -155,7 +158,7 @@ class CODEXtractor:
             return None, None
 
         # Step 2: Creating annotations
-        annotations_json = self.make_annotations(nuclei_mask, region_coords)
+        annotations_json = self.make_annotations(cytoplasm_mask, region_coords)
 
         # Step 3: Get list of image regions from each frame
         frame_list = []
@@ -177,7 +180,6 @@ class CODEXtractor:
         frame_array = np.array(frame_list)
 
         # Step 4: Iterating through nuclei and getting frame statistics
-        n_nuclei = np.unique(nuclei_mask).tolist()[1:]
         feature_list = [
             'Mean_Channels',
             'Std_Channels',
@@ -185,12 +187,21 @@ class CODEXtractor:
             'Min_Channels',
             'Median_Channels'
         ]
-        for nuc_idx,nuc in enumerate(n_nuclei):
+        for nuc_idx,nuc in tqdm(enumerate(annotations_json[0]['annotation']['elements'])):
             
             # Getting a binary mask of this specific nucleus and its cytoplasm
-            specific_nuc_mask = cytoplasm_mask.copy()
-            specific_nuc_mask[specific_nuc_mask != nuc] = 0
-            specific_nuc_mask[specific_nuc_mask>0] = 1
+            #specific_nuc_mask = cytoplasm_mask.copy()
+            #specific_nuc_mask[specific_nuc_mask != nuc] = 0
+            #specific_nuc_mask[specific_nuc_mask>0] = 1
+
+            # Instead of creating the mask from the cytoplasm mask, creating from the annotation
+            # This insures alignment in the event that a nucleus is not a valid shape
+            specific_nuc_mask = np.zeros_like(nuclei_mask)
+            adjusted_coords = [[i[0]-region_coords[0],i[1]-region_coords[1]] for i in nuc['points']]
+            row_coords = [i[1] for i in adjusted_coords]
+            col_coords = [i[0] for i in adjusted_coords]
+            row, col = polygon(row_coords,col_coords)
+            specific_nuc_mask[row,col] = 1
 
             # Masking the frame_array
             masked_frames = np.where(specific_nuc_mask>0,frame_array.copy(),0)

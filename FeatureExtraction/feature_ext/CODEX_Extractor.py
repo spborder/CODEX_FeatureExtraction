@@ -36,6 +36,8 @@ class CODEXtractor:
                  gc):
         
         self.gc = gc
+
+        self.user_token = self.gc.get('/token/session')['token']
         self.image_id = image_id
         self.seg_params = seg_params
 

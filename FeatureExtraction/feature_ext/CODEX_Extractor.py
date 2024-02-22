@@ -21,6 +21,9 @@ import pandas as pd
 from typing import List, Union
 
 import large_image
+from PIL import Image
+import requests
+from io import BytesIO
 
 import wsi_annotations_kit.wsi_annotations_kit as wak
 
@@ -42,9 +45,10 @@ class CODEXtractor:
         self.tile_source = large_image.getTileSource(f'/{self.image_info["name"]}')
         self.tile_metadata = self.tile_source.getMetadata()
 
-    def get_image_region(self,frame,region_coords):
+    def get_image_region(self,coords_list,frame_index):
 
         # Region coords in this case should be in the form [minx, miny, maxx, maxy] or left, top, right, bottom
+        """
         image_region = self.tile_source.getRegion(
             region = {
                 'left': region_coords[0],
@@ -55,6 +59,8 @@ class CODEXtractor:
             frame = frame,
             format = large_image.constants.TILE_FORMAT_NUMPY
         )
+        """
+        image_region = Image.open(BytesIO(requests.get(self.gc.urlBase+f'/item/{self.image_id}/tiles/region?token={self.user_token}&frame={frame_index}&left={coords_list[0]}&top={coords_list[1]}&right={coords_list[2]}&bottom={coords_list[3]}').content))
 
         return image_region
 
@@ -122,6 +128,7 @@ class CODEXtractor:
         # return_type can be a string or list of strings 
 
         # Step 1: Segmenting the nuclei
+        """
         nuclei_region, _ = self.tile_source.getRegion(
             frame = self.seg_params['frame'],
             region = {
@@ -133,11 +140,14 @@ class CODEXtractor:
             output = dict(maxWidth = 2000),
             format = large_image.constants.TILE_FORMAT_NUMPY
         )
+        """
+        nuclei_region = self.get_image_region(region_coords,self.seg_params['frame'])
 
         nuclei_mask, cytoplasm_mask = self.get_nuclei(nuclei_region)
 
         # If there are no nuclei, don't do the rest here
         if np.sum(nuclei_mask)==0:
+            print('No nuclei found :(')
             return None, None
 
         # Step 2: Creating annotations
@@ -146,7 +156,8 @@ class CODEXtractor:
         # Step 3: Get list of image regions from each frame
         frame_list = []
         for f in range(0,len(self.tile_metadata['frames'])-1):
-
+            
+            """
             frame_region = self.tile_source.getRegion(
                 frame = f,
                 region = {
@@ -157,6 +168,8 @@ class CODEXtractor:
                 },
                 format = large_image.constants.TILE_FORMAT_NUMPY
             )
+            """
+            frame_region = self.get_image_region(region_coords,f)
             frame_list.append(frame_region)
         
         # Creating an array that should be regionY x regionX x nFrames

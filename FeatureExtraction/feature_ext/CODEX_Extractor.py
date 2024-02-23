@@ -116,7 +116,8 @@ class CODEXtractor:
         annotations.add_mask(
             mask = binary_mask,
             box_crs = [region_coords[0],region_coords[1]],
-            mask_type = 'labeled'
+            mask_type = 'labeled',
+            structure = 'CODEX Nuclei'
         )
 
         # Conversion to JSON

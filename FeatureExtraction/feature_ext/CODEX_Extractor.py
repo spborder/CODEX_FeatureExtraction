@@ -207,16 +207,14 @@ class CODEXtractor:
 
                 # Masking the frame_array
                 masked_frames = np.where(specific_nuc_mask>0,frame_array.copy(),0)
-                print(f'shape of masked_frames: {np.shape(masked_frames)}')
+                n_channels = np.shape(masked_frames)[0]
 
                 # Finding intensity features
-                mean_frames = np.nanmean(masked_frames,axis = tuple(range(masked_frames.ndim-1)))
-                std_frames = np.nanstd(masked_frames,axis = tuple(range(masked_frames.ndim-1)))
-                max_frames = np.nanmax(masked_frames,axis = tuple(range(masked_frames.ndim-1)))
-                min_frames = np.nanmin(masked_frames,axis = tuple(range(masked_frames.ndim-1)))
-                median_frames = np.nanmedian(masked_frames,axis = tuple(range(masked_frames.ndim-1)))
-                print(tuple(range(masked_frames.ndim-1)))
-                print(f'shape of mean_frames: {np.shape(mean_frames)}')
+                mean_frames = np.nanmean(masked_frames,axis = tuple(range(1,n_channels)))
+                std_frames = np.nanstd(masked_frames,axis = tuple(range(1,n_channels)))
+                max_frames = np.nanmax(masked_frames,axis = tuple(range(1,n_channels)))
+                min_frames = np.nanmin(masked_frames,axis = tuple(range(1,n_channels)))
+                median_frames = np.nanmedian(masked_frames,axis = tuple(range(1,n_channels)))
 
                 intensity_features_list = [mean_frames, std_frames, max_frames, min_frames, median_frames]
 

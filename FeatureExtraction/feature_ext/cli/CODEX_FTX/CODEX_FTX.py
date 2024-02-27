@@ -81,12 +81,12 @@ class Patches:
                 for y in range(0,n_patch_y):
 
                     # Finding patch start coordinates
-                    patch_start_x = np.minimum(self.region[0]+(x*self.patch_size),(self.region[0]+self.region[2])-((self.region[0]+self.region[2])%self.patch_size))
-                    patch_start_y = np.minimum(self.region[0]+(y*self.patch_size),(self.region[1]+self.region[3])-((self.region[1]+self.region[3])%self.patch_size))
+                    patch_start_x = np.minimum(self.region[0]+(x*self.patch_size),(region_width)-((region_width)%self.patch_size))
+                    patch_start_y = np.minimum(self.region[1]+(y*self.patch_size),(region_height)-((region_height)%self.patch_size))
 
                     # Finding patch end coordinates
-                    patch_end_x = np.minimum(patch_start_x+self.patch_size, (self.region[0]+self.region[2]))
-                    patch_end_y = np.minimum(patch_start_y+self.patch_size,(self.region[1]+self.region[3]))
+                    patch_end_x = np.minimum(patch_start_x+self.patch_size, (region_width))
+                    patch_end_y = np.minimum(patch_start_y+self.patch_size,(region_height))
 
                     patch_regions_list.append([patch_start_x,patch_start_y,patch_end_x,patch_end_y])
             

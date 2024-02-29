@@ -210,9 +210,6 @@ def main(args):
                 return_type = return_type
             )
 
-            print(f'return_annotations: {return_annotations}')
-            print(f'Found: {len(region_annotations[0]["annotation"]["elements"])} Nuclei')
-
             if return_annotations:
                 if not region_annotations is None:
                     # Adding to total annotations object

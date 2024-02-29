@@ -60,6 +60,7 @@ setup(
         'dask==2023.9.0',
         'girder-slicer-cli-web',
         'girder-client',
+        'matplotlib',
         # cli
         'ctk-cli',
         'wsi-annotations-kit'

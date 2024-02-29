@@ -41,10 +41,11 @@ class CODEXtractor:
         self.seg_params = seg_params
 
         # Getting image information
-        self.image_info = gc.get(f'/item/{self.image_id}')
+        self.image_info = self.gc.get(f'/item/{self.image_id}')
 
-        self.tile_source = large_image.getTileSource(f'/{self.image_info["name"]}')
-        self.tile_metadata = self.tile_source.getMetadata()
+        #self.tile_source = large_image.getTileSource(f'/{self.image_info["name"]}')
+        #self.tile_metadata = self.tile_source.getMetadata()
+        self.tile_metadata = self.gc.get(f'/item/{self.image_id}/tiles')
 
     def get_image_region(self,coords_list,frame_index):
 

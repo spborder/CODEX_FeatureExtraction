@@ -62,7 +62,6 @@ setup(
         'girder-client',
         # cli
         'ctk-cli',
-        'large-image[all]',
         'wsi-annotations-kit'
     ],
     license='Apache Software License 2.0',

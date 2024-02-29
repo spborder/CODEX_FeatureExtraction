@@ -20,7 +20,6 @@ import pandas as pd
 
 from typing import List, Union
 
-import large_image
 from PIL import Image
 import requests
 from io import BytesIO
